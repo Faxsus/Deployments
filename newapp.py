@@ -40,23 +40,23 @@ HTML_FORM = """
 <div id="result" style="margin-top:20px;font-weight:bold;font-size:18px;"></div>
 <script>
 const form = document.getElementById('stroke-form');
-form.onsubmit = async function(e) {
+form.onsubmit = async function(e) {{
     e.preventDefault();
     const formData = new FormData(form);
-    let data = {};
+    let data = {{}};
     for (let [k,v] of formData.entries()) data[k]=v;
-    const resp = await fetch(window.location.pathname, {
+    const resp = await fetch(window.location.pathname, {{
         method: "POST",
-        headers: {"Content-Type":"application/json"},
+        headers: {{"Content-Type":"application/json"}},
         body: JSON.stringify(data)
-    });
+    }});
     const result = await resp.json();
     document.getElementById('result').innerHTML = result.prediction;
     document.getElementById('result').style.background = result.prediction === "At Risk" ? "#e74c3c" : "#2ecc71";
     document.getElementById('result').style.color = "white";
     document.getElementById('result').style.padding = "15px";
     document.getElementById('result').style.borderRadius = "8px";
-};
+}};
 </script>
 """
 
@@ -137,4 +137,3 @@ if st._is_running_with_streamlit:
             return JSONResponse({"prediction": prediction})
 
         st._custom_api_registered = True
-
