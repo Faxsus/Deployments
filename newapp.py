@@ -28,20 +28,20 @@ model = joblib.load("svm_stroke_model.pkl")
 # Custom CSS for styling
 st.markdown("""
 <style>
-body { font-family: Arial, sans-serif; background: #f5f7fa; }
-.stApp { background: #f5f7fa; }
+body { font-family: Arial, sans-serif; background: #111; color: #e74c3c; }
+.stApp { background: #111; color: #e74c3c; }
 .container { max-width: 500px; margin: 0 auto; }
-.card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.1);}
-h2 { text-align: center; }
+.card { background: #222; padding: 30px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.1);}
+h2 { text-align: center; color: #e74c3c; }
 .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
 .form-group { margin-bottom: 10px; }
-label { display: block; margin-bottom: 5px; }
-select, input { width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ccc; }
-button, .stButton>button { background: #3498db; color: white; padding: 10px; border: none; border-radius: 8px; width: 100%; margin-top: 10px; }
-.result { margin-top: 20px; padding: 15px; border-radius: 8px; font-weight: bold; text-align: center; }
-.risk { background: #e74c3c; color: white; }
-.safe { background: #2ecc71; color: white; }
-.error { background: #f39c12; color: white; }
+label { display: block; margin-bottom: 5px; color: #e74c3c; }
+select, input { width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ccc; color: #e74c3c; background: #111; }
+button, .stButton>button { background: #222; color: #e74c3c; padding: 10px; border: none; border-radius: 8px; width: 100%; margin-top: 10px; font-weight: bold; }
+.result { margin-top: 20px; padding: 15px; border-radius: 8px; font-weight: bold; text-align: center; color: #e74c3c; background: #222; }
+.risk { background: #222; color: #e74c3c; }
+.safe { background: #222; color: #e74c3c; }
+.error { background: #222; color: #e74c3c; }
 </style>
 """, unsafe_allow_html=True)
 
