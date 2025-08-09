@@ -1,4 +1,3 @@
-from streamlit.components.v1 import html
 import streamlit as st
 import joblib
 import pandas as pd
@@ -26,114 +25,58 @@ FEATURES = [
 # Load model pipeline
 model = joblib.load("svm_stroke_model.pkl")
 
-HTML_FORM = """
-<form id="stroke-form">
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:15px;">
-        <div>
-            <label>Age:</label>
-            <input type="number" name="Age" min="1" max="120" required>
-        </div>
-        {fields}
-    </div>
-    <button type="submit" style="margin-top:20px;background:#3498db;color:white;padding:10px;border:none;border-radius:8px;width:100%;">Predict Risk</button>
-</form>
-<div id="result" style="margin-top:20px;font-weight:bold;font-size:18px;"></div>
-<script>
-const form = document.getElementById('stroke-form');
-form.onsubmit = async function(e) {{
-    e.preventDefault();
-    const formData = new FormData(form);
-    let data = {{}};
-    for (let [k,v] of formData.entries()) data[k]=v;
-    const resp = await fetch(window.location.pathname, {{
-        method: "POST",
-        headers: {{"Content-Type":"application/json"}},
-        body: JSON.stringify(data)
-    }});
-    const result = await resp.json();
-    document.getElementById('result').innerHTML = result.prediction;
-    document.getElementById('result').style.background = result.prediction === "At Risk" ? "#e74c3c" : "#2ecc71";
-    document.getElementById('result').style.color = "white";
-    document.getElementById('result').style.padding = "15px";
-    document.getElementById('result').style.borderRadius = "8px";
-}};
-</script>
-"""
+# Custom CSS for styling
+st.markdown("""
+<style>
+body { font-family: Arial, sans-serif; background: #f5f7fa; }
+.stApp { background: #f5f7fa; }
+.container { max-width: 500px; margin: 0 auto; }
+.card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.1);}
+h2 { text-align: center; }
+.form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+.form-group { margin-bottom: 10px; }
+label { display: block; margin-bottom: 5px; }
+select, input { width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ccc; }
+button, .stButton>button { background: #3498db; color: white; padding: 10px; border: none; border-radius: 8px; width: 100%; margin-top: 10px; }
+.result { margin-top: 20px; padding: 15px; border-radius: 8px; font-weight: bold; text-align: center; }
+.risk { background: #e74c3c; color: white; }
+.safe { background: #2ecc71; color: white; }
+.error { background: #f39c12; color: white; }
+</style>
+""", unsafe_allow_html=True)
 
-def make_fields():
-    html_fields = ""
-    for feat in FEATURES[1:]:
-        html_fields += f"""
-        <div>
-            <label>{feat}:</label>
-            <select name="{feat}" required>
-                <option value="0">No</option>
-                <option value="1">Yes</option>
-            </select>
-        </div>
-        """
-    return html_fields
+st.markdown('<div class="container"><h2>Stroke Risk Prediction</h2><div class="card">', unsafe_allow_html=True)
 
-st.set_page_config(page_title="Stroke Risk Prediction", layout="centered")
-st.title("🧠 Stroke Risk Prediction")
-st.write("Isi form berikut untuk memprediksi risiko stroke:")
+with st.form("stroke_form"):
+    # Grid layout for form fields
+    cols = st.columns(2)
+    input_data = {}
+    for idx, feature in enumerate(FEATURES):
+        with cols[idx % 2]:
+            st.markdown(f'<div class="form-group">', unsafe_allow_html=True)
+            st.markdown(f'<label>{feature}:</label>', unsafe_allow_html=True)
+            if feature == "Age":
+                input_data[feature] = st.number_input(" ", min_value=1, max_value=120, step=1, key=feature)
+            else:
+                input_data[feature] = st.selectbox(
+                    " ", options=[("No", 0), ("Yes", 1)], format_func=lambda x: x[0], key=feature
+                )[1]
+            st.markdown('</div>', unsafe_allow_html=True)
+    submitted = st.form_submit_button("Predict Risk")
 
-fields_html = make_fields()
-form_html = HTML_FORM.format(fields=fields_html)
+prediction = None
+if submitted:
+    try:
+        df = pd.DataFrame([input_data])[FEATURES]
+        result = model.predict(df)[0]
+        prediction = "At Risk" if result == 1 else "Not at Risk"
+        css_class = "risk" if prediction == "At Risk" else "safe"
+    except Exception as e:
+        prediction = f"Error: {str(e)}"
+        css_class = "error"
+    st.markdown(
+        f'<div class="result {css_class}">{prediction}</div>',
+        unsafe_allow_html=True
+    )
 
-def predict_api():
-    import streamlit.web.server.websocket_headers
-    from streamlit.runtime.scriptrunner import get_script_run_ctx
-    from streamlit.runtime import get_instance
-    from streamlit.web.server import Server
-    import json
-
-    # Streamlit's hacky way to get the request body
-    ctx = get_script_run_ctx()
-    if ctx is not None and hasattr(ctx, "request") and ctx.request is not None:
-        try:
-            body = ctx.request.body.decode()
-            data = json.loads(body)
-            input_data = {}
-            for feat in FEATURES:
-                input_data[feat] = int(data.get(feat, 0))
-            df = pd.DataFrame([input_data])[FEATURES]
-            result = model.predict(df)[0]
-            prediction = "At Risk" if result == 1 else "Not at Risk"
-            return {"prediction": prediction}
-        except Exception as e:
-            return {"prediction": f"Error: {str(e)}"}
-    return None
-
-if st._is_running_with_streamlit:
-    # Show HTML form
-    html(form_html, height=600)
-
-    # Handle POST (AJAX) requests
-    import streamlit.web.server.websocket_headers
-    from streamlit.runtime.scriptrunner import get_script_run_ctx
-    from streamlit.runtime import get_instance
-    from streamlit.web.server import Server
-    import json
-
-    # Monkey patching to add a POST endpoint (for demo, not production)
-    if not hasattr(st, "_custom_api_registered"):
-        from streamlit.web.server import routes
-        from fastapi import Request
-        from fastapi.responses import JSONResponse
-
-        @routes.app.post("/")
-        async def predict_route(request: Request):
-            data = await request.json()
-            input_data = {}
-            for feat in FEATURES:
-                input_data[feat] = int(data.get(feat, 0))
-            df = pd.DataFrame([input_data])[FEATURES]
-            try:
-                result = model.predict(df)[0]
-                prediction = "At Risk" if result == 1 else "Not at Risk"
-            except Exception as e:
-                prediction = f"Error: {str(e)}"
-            return JSONResponse({"prediction": prediction})
-
-        st._custom_api_registered = True
+st.markdown('</div></div>', unsafe_allow_html=True)
