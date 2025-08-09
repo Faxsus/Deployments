@@ -24,7 +24,7 @@ FEATURES = [
 ]
 
 # Load model pipeline
-model = joblib.load("C:\\.kampus\\DE\\Uas mpml\\svm_stroke_model.pkl")
+model = joblib.load("svm_stroke_model.pkl")
 
 HTML_FORM = """
 <form id="stroke-form">
@@ -137,3 +137,4 @@ if st._is_running_with_streamlit:
             return JSONResponse({"prediction": prediction})
 
         st._custom_api_registered = True
+
